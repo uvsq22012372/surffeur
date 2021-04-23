@@ -25,7 +25,9 @@ char *ptr;
 struct list_Ty *list;
 struct list_Ty *l;
 
-struct array_Ty* CreateMatrix(int *f,char* filePath){
+struct array_Ty* CreateMatrix(int *f, char* filePath){
+    printf("Loading Matrix file ....\n");
+
     FILE *file;
     struct array_Ty* Matrix;
     char line[MAXCHAR];
@@ -38,6 +40,7 @@ struct array_Ty* CreateMatrix(int *f,char* filePath){
     }
     fgets(line, MAXCHAR, file);
 
+    printf("Creating Matrix structure in memory ....\n");
     for(int i = 0; i < nbr_Vertices; i++){
         fgets(line, MAXCHAR, file);
         ptr = strtok(line, " ");
@@ -48,8 +51,7 @@ struct array_Ty* CreateMatrix(int *f,char* filePath){
 
         list = malloc(sizeof(struct list_Ty));
         int s = atoi(ptr);
-        if (s == 0 ) f[i] = 1;
-        else f[i] = 0;
+        if (s == 0 ) f[i] = 1; else f[i] = 0;
         for(int j = 0; j < s; j++){
             if (!Matrix[n-1].list) Matrix[n-1].list = list;
             else {
@@ -64,6 +66,8 @@ struct array_Ty* CreateMatrix(int *f,char* filePath){
         }
     }
     fclose(file);
+
+    printf("Matrix Created successfully ....\n");
     return Matrix;
 }
 
@@ -102,6 +106,7 @@ int get_nbr_Vrtc(char* filePath){
 }
 
 void *initializeVector(float *vector, float valIni, int size){
+    printf("Initializing parameters\n");
     if (valIni == -1){
         float a = (float )1/(float)(nbr_Vertices + additionalVertices);
         for (int i = 0; i < size; i++) vector[i] = a;
@@ -170,9 +175,9 @@ void convergence(struct array_Ty *Matrix, float * Vector, float *result, int *f,
         inter += (1-alpha)/(float)nbr_Vertices;
         addConstToVector(result, inter);
         itr++;
-        printf("---------------- %d\n", itr);
+        printf("******************* Iteration Num : %d\n", itr);
         diff = getDiffVectors(nbr_Vertices, Vector, result);
-        printf("%f\n ", diff);
+        printf("Epsilon = %f\n ", diff);
         copyVectors(nbr_Vertices, Vector, result);
     }
 }
@@ -196,11 +201,21 @@ int main() {
     array_Ty* Matrix = CreateMatrix(f, filePath);
     initializeVector(X, -1, nbr_Vertices);
 
+    //------------------------------------------------------------------------------------------------------------------
+    t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
+    printf("\nLa création de structure de la matrice a pris %f seconds\n", time_taken);
+    t = clock();
+    //------------------------------------------------------------------------------------------------------------------
+
     convergence(Matrix, X, result, f, 0.000001f, alpha);
 
     //---------------------fin surfer aléatoire-------------------------------------------------------------------------
     t = clock() - t;
-    double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-    printf("La convergence a pris %f seconds\n", time_taken);
+    time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
+    printf("\nLa convergence a pris %f seconds\n", time_taken);
+
+//    printf("Relevance vector : ");
+//    PrintVector(X, nbr_Vertices);
 
 }
