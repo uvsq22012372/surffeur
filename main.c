@@ -19,8 +19,7 @@ struct list_Ty {
 };
 
 
-int nbr_Vertices;
-int additionalVertices = 0;
+int nombreSommets;
 char *ptr;
 struct list_Ty *list;
 struct list_Ty *l;
@@ -28,20 +27,24 @@ struct list_Ty *l;
 struct array_Ty* CreateMatrix(int *f, char* filePath){
     printf("Loading Matrix file ....\n");
 
+    // Ouvrir le fichier du graphe
     FILE *file;
     struct array_Ty* Matrix;
     char line[MAXCHAR];
 
+    // Erreur de chargement du fichier
     file = fopen(filePath, "r");
     if (file == NULL) perror("fopen in gm_write_dot");
 
+    // allocation du tableau de la matrice
     if (fgets(line, MAXCHAR, file) != NULL){
-        Matrix = malloc(nbr_Vertices * sizeof(*Matrix));
+        Matrix = malloc(nombreSommets * sizeof(*Matrix));
     }
     fgets(line, MAXCHAR, file);
 
+    // parcours du fichier et la création des noeuds
     printf("Creating Matrix structure in memory ....\n");
-    for(int i = 0; i < nbr_Vertices; i++){
+    for(int i = 0; i < nombreSommets; i++){
         fgets(line, MAXCHAR, file);
         ptr = strtok(line, " ");
         int n = atoi(ptr);
@@ -51,7 +54,11 @@ struct array_Ty* CreateMatrix(int *f, char* filePath){
 
         list = malloc(sizeof(struct list_Ty));
         int s = atoi(ptr);
+
+        // création du vecteur "f"
         if (s == 0 ) f[i] = 1; else f[i] = 0;
+
+        //création d'une liste chainé pour chaque sommets (matrice creuse)
         for(int j = 0; j < s; j++){
             if (!Matrix[n-1].list) Matrix[n-1].list = list;
             else {
@@ -71,6 +78,7 @@ struct array_Ty* CreateMatrix(int *f, char* filePath){
     return Matrix;
 }
 
+//Afficher une matrice
 void PrintMatrix(array_Ty* matrix, int size){
     int i = 0;
     while (matrix[i].sommet <= size){
@@ -85,6 +93,7 @@ void PrintMatrix(array_Ty* matrix, int size){
     }
 }
 
+//Afficher un vecteur
 void PrintVector(float *vct, int size){
     for(int i = 0; i < size; i++){
         printf("%f - ", vct[i]);
@@ -92,10 +101,10 @@ void PrintVector(float *vct, int size){
     printf("\n");
 }
 
-int get_nbr_Vrtc(char* filePath){
+// Retourne le nombre de sommets total du graphe
+int getNbrSommets(char* filePath){
     FILE *file;
     char line[MAXCHAR];
-    char root[50];
 
     file = fopen(filePath, "r");
     if (file == NULL) perror("fopen in gm_write_dot");
@@ -105,17 +114,19 @@ int get_nbr_Vrtc(char* filePath){
     }
 }
 
+// Initialiser un vecteur avec le param "valIni"
+// Si "ValTni" == 0, alors le vecteur sera initialiser par la valeur 1/N
 void *initializeVector(float *vector, float valIni, int size){
     printf("Initializing parameters\n");
     if (valIni == -1){
-        float a = (float )1/(float)(nbr_Vertices + additionalVertices);
+        float a = (float )1/(float)nombreSommets;
         for (int i = 0; i < size; i++) vector[i] = a;
-    } else for (int i = 0; i < nbr_Vertices; i++) vector[i] = valIni;
+    } else for (int i = 0; i < nombreSommets; i++) vector[i] = valIni;
 }
 
 void multiplyVectorByMatrix(array_Ty* matrix, const float *vector, float *result){
-    for (int i = 0; i < nbr_Vertices; ++i) result[i] = 0;
-    for (int i = 0; i < nbr_Vertices; ++i) {
+    for (int i = 0; i < nombreSommets; ++i) result[i] = 0;
+    for (int i = 0; i < nombreSommets; ++i) {
         l = matrix[i].list;
         while (l != NULL) {
             result[l->sommet - 1] += vector[i] * l->valeur;
@@ -126,14 +137,14 @@ void multiplyVectorByMatrix(array_Ty* matrix, const float *vector, float *result
 
 float multiplyVectorByVector(const float* X, const int* f){
     float sum = 0;
-    for (int i = 0; i < nbr_Vertices; ++i){
+    for (int i = 0; i < nombreSommets; ++i){
         sum += X[i] * (float)f[i];
     }
     return sum;
 }
 
 void multiplyConstByMatrix(array_Ty* matrix, float val){
-    for (int i = 0; i < nbr_Vertices; ++i) {
+    for (int i = 0; i < nombreSommets; ++i) {
         l = matrix[i].list;
         while (l != NULL) {
             l ->valeur *= val;
@@ -143,7 +154,7 @@ void multiplyConstByMatrix(array_Ty* matrix, float val){
 }
 
 void addConstToVector(float *vector, float val){
-    for (int i = 0; i < nbr_Vertices; ++i){
+    for (int i = 0; i < nombreSommets; ++i){
         vector[i] += val;
     }
 }
@@ -171,14 +182,14 @@ void convergence(struct array_Ty *Matrix, float * Vector, float *result, int *f,
     while (diff > epsilon){
         multiplyVectorByMatrix(Matrix, Vector, result);
         inter = multiplyVectorByVector(Vector, f);
-        inter *= alpha/(float )nbr_Vertices;
-        inter += (1-alpha)/(float)nbr_Vertices;
+        inter *= alpha/(float )nombreSommets;
+        inter += (1-alpha)/(float)nombreSommets;
         addConstToVector(result, inter);
         itr++;
         printf("******************* Iteration Num : %d\n", itr);
-        diff = getDiffVectors(nbr_Vertices, Vector, result);
+        diff = getDiffVectors(nombreSommets, Vector, result);
         printf("Epsilon = %f\n ", diff);
-        copyVectors(nbr_Vertices, Vector, result);
+        copyVectors(nombreSommets, Vector, result);
     }
 }
 
@@ -187,19 +198,19 @@ void convergence(struct array_Ty *Matrix, float * Vector, float *result, int *f,
 int main() {
     //---------------------Déclaration & initialisation-----------------------------------------------------------------
     clock_t t;
-    char* filePath = "C:\\Users\\OsmOlr\\Desktop\\mod&sim_data\\wb-edu.txt";
+    char* filePath = "C:\\Users\\OsmOlr\\Desktop\\mod&sim_data\\Exemple.txt";
     float alpha = 0.85f;
-    nbr_Vertices = get_nbr_Vrtc(filePath);
+    nombreSommets = getNbrSommets(filePath);
 
     t = clock();
     //---------------------surfer aléatoire-----------------------------------------------------------------------------
 
-    int *f = malloc(nbr_Vertices * sizeof(int));
-    float *X = malloc(nbr_Vertices * sizeof(float ));
-    float *result = malloc(nbr_Vertices * sizeof(float));
+    int *f = malloc(nombreSommets * sizeof(int));
+    float *X = malloc(nombreSommets * sizeof(float ));
+    float *result = malloc(nombreSommets * sizeof(float));
 
     array_Ty* Matrix = CreateMatrix(f, filePath);
-    initializeVector(X, -1, nbr_Vertices);
+    initializeVector(X, -1, nombreSommets);
 
     //------------------------------------------------------------------------------------------------------------------
     t = clock() - t;
@@ -215,7 +226,7 @@ int main() {
     time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
     printf("\nLa convergence a pris %f seconds\n", time_taken);
 
-//    printf("Relevance vector : ");
-//    PrintVector(X, nbr_Vertices);
+    printf("Relevance vector : ");
+    PrintVector(X, nombreSommets);
 
 }
